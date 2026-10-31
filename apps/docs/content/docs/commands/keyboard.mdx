@@ -11,7 +11,7 @@ description: Reference for press, key-down, and key-up. press sends key combos; 
 Sends a key combo to the focused window, or to one app.
 
 ```bash
-agent-desktop press COMBO [--app NAME] [--window-id ID] [--force]
+agent-desktop press COMBO [--app NAME] [--window-id ID [--process-target]] [--force]
 agent-desktop press ctrl+shift+z
 agent-desktop press return --app gnome-calculator
 ```
@@ -53,6 +53,8 @@ Errors specific to `press`:
 - `POLICY_DENIED`: the platform blocks the combo. The disposition is `not_delivered`. Pass `--force` only when you mean it.
 - `ACTION_FAILED` with `details.cause: "frame_not_active"`: a headless scoped press to an app whose window is not active. Nothing is sent. Bring the window forward, or pass `--headed` if focus changes are permitted.
 - `TIMEOUT` with `details.kind: "wait_timeout"`: a `--wait-for` selector never matched. The keys were already delivered, so do not repeat the press blindly.
+
+On macOS, `--window-id ID --process-target` sends the combo to the process that owns the window, without activating it. Use it when several instances of one app run at once: `--app` refuses an ambiguous name, and a headless `--window-id` alone needs that exact window to be active. The process receives the keys, but the flag does not choose which of the process's windows handles them, and the keys go to the element that has keyboard focus there. An AppKit app does not run menu shortcuts such as `cmd+a` while it is in the background. Observe the result before you act again. It cannot be combined with `--headed`.
 
 Platform limits: each platform has its own key names, blocked combos, and scoped-press rules. See [macOS](/desktop/platforms/macos#keys-and-notifications), [Windows](/desktop/platforms/windows#keys), and [Linux](/desktop/platforms/linux).
 

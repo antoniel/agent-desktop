@@ -79,7 +79,8 @@ agent-desktop snapshot --app Finder -i      # observe again to verify
 - **Dense apps:** map first with `snapshot --skeleton --app Slack -i --compact`, then drill into one region with
   `snapshot --root @s8f3k2p9:e3 -i --compact`.
 - **Headless by default.** Ref actions go through the accessibility API without moving the pointer or taking focus.
-  The global `--headed` flag allows physical input.
+  The global `--headed` flag allows physical input. On macOS, `press` and `type` with `--window-id w-123
+  --process-target` send keys to the process that owns that window without taking focus.
 - **PowerShell.** Quote every ref (`'@s8f3k2p9:e8'`), because a bare `@token` is the splatting operator.
 
 ## For AI agents

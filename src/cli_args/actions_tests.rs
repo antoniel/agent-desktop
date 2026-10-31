@@ -188,3 +188,43 @@ fn type_args_with_an_interval_budget_the_spread_plus_each_keystroke() {
 
     assert!(TypeArgs::try_parse_from(["type", "@e1", "abc", "--interval-ms", "0"]).is_err());
 }
+
+#[test]
+fn type_with_process_target_takes_text_without_a_ref() {
+    let args = TypeArgs::try_parse_from([
+        "type",
+        "--window-id",
+        "w-7",
+        "--process-target",
+        "Sintético",
+    ])
+    .unwrap();
+    assert!(args.process_target);
+    assert_eq!(args.text_value(), "Sintético");
+}
+
+#[test]
+fn type_without_process_target_still_requires_ref_and_text() {
+    assert!(TypeArgs::try_parse_from(["type", "hello"]).is_err());
+    let args = TypeArgs::try_parse_from(["type", "@e1", "hello"]).unwrap();
+    assert_eq!(args.text_value(), "hello");
+}
+
+#[test]
+fn process_target_flags_require_each_other() {
+    assert!(TypeArgs::try_parse_from(["type", "--process-target", "x"]).is_err());
+    assert!(PressArgs::try_parse_from(["press", "cmd+k", "--process-target"]).is_err());
+    assert!(
+        PressArgs::try_parse_from(["press", "cmd+k", "--window-id", "w-1", "--process-target"])
+            .is_ok()
+    );
+}
+
+#[test]
+fn type_batch_json_with_process_target_takes_text_only() {
+    let args: TypeArgs = serde_json::from_value(serde_json::json!({
+        "text": "hoje", "window_id": "w-7", "process_target": true
+    }))
+    .unwrap();
+    assert_eq!(args.text_value(), "hoje");
+}

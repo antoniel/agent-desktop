@@ -26,11 +26,19 @@ fn default_ref_timeout_ms() -> u64 {
 pub(crate) struct TypeArgs {
     #[arg(
         value_name = "REF",
-        help = "Qualified ref from snapshot (@<snapshot_id>:eN)"
+        required_unless_present = "process_target",
+        help = "Qualified ref from snapshot (@<snapshot_id>:eN); omitted with --process-target"
     )]
-    pub ref_id: String,
-    #[arg(value_name = "TEXT", allow_hyphen_values = true, help = "Text to type")]
-    pub text: String,
+    #[serde(default)]
+    pub ref_id: Option<String>,
+    #[arg(
+        value_name = "TEXT",
+        allow_hyphen_values = true,
+        required_unless_present = "process_target",
+        help = "Text to type"
+    )]
+    #[serde(default)]
+    pub text: Option<String>,
     #[arg(
         long = "timeout-ms",
         help = "Maximum wait in milliseconds, covering ref resolution, actionability and delivery of the text; default 5000 plus 30 per character of TEXT; 0 disables the wait"
@@ -44,19 +52,43 @@ pub(crate) struct TypeArgs {
     )]
     #[serde(default)]
     pub interval_ms: Option<u64>,
+    #[arg(
+        long = "window-id",
+        requires = "process_target",
+        help = "Window whose process receives the text; requires --process-target"
+    )]
+    #[serde(default)]
+    pub window_id: Option<String>,
+    #[arg(
+        long,
+        requires = "window_id",
+        help = "Type TEXT into the focused element of the window's process in the background, without a REF and without activating it; cannot be used with --headed"
+    )]
+    #[serde(default)]
+    pub process_target: bool,
 }
 
 impl TypeArgs {
+    /// The text to type. With `--process-target` there is no REF, so a lone
+    /// positional is the text.
+    pub(crate) fn text_value(&self) -> &str {
+        match (&self.text, &self.ref_id) {
+            (Some(text), _) => text,
+            (None, Some(only)) if self.process_target => only,
+            _ => "",
+        }
+    }
+
     pub(crate) fn effective_timeout_ms(&self) -> u64 {
         if let Some(interval_ms) = self.interval_ms {
             return agent_desktop_core::commands::type_text::interval_budget_ms(
-                &self.text,
+                self.text_value(),
                 interval_ms,
                 self.timeout_ms,
             );
         }
         self.timeout_ms.unwrap_or_else(|| {
-            agent_desktop_core::commands::type_text::default_timeout_ms(&self.text)
+            agent_desktop_core::commands::type_text::default_timeout_ms(self.text_value())
         })
     }
 }
@@ -150,6 +182,13 @@ pub(crate) struct PressArgs {
     )]
     #[serde(default)]
     pub window_id: Option<String>,
+    #[arg(
+        long,
+        requires = "window_id",
+        help = "Target the owning process without guaranteeing which window receives the key; cannot be used with --headed"
+    )]
+    #[serde(default)]
+    pub process_target: bool,
     #[arg(
         long,
         help = "Send the combo even if the adapter flags it as a dangerous shortcut"

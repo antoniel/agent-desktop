@@ -150,6 +150,7 @@ fn args(combo: &str, force: bool) -> PressArgs {
         combo: combo.to_owned(),
         app: None,
         window_id: None,
+        process_target: false,
         force,
     }
 }

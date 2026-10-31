@@ -50,6 +50,9 @@ pub mod permissions;
 pub(crate) mod point_resolve;
 pub(crate) mod pointer_action;
 pub mod press;
+pub mod process_target;
+#[cfg(test)]
+pub(crate) mod process_target_test_support;
 pub mod query;
 pub mod resize_window;
 pub mod restore;

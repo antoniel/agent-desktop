@@ -1,6 +1,6 @@
 use agent_desktop_core::{
     AdapterError, ClipboardContent, ClipboardFormat, Deadline, DragParams, InputOps,
-    InteractionLease, KeyCombo, MouseEvent, OperationReport,
+    InteractionLease, KeyCombo, MouseEvent, OperationReport, WindowInfo,
 };
 
 use crate::adapter::MacOSAdapter;
@@ -33,6 +33,15 @@ impl InputOps for MacOSAdapter {
         let report = OperationReport::drag_dispatched(&params);
         crate::input::mouse::synthesize_drag(params, lease.deadline())?;
         Ok(report)
+    }
+
+    fn type_text_for_window(
+        &self,
+        window: &WindowInfo,
+        text: &str,
+        lease: &InteractionLease,
+    ) -> Result<agent_desktop_core::ActionResult, AdapterError> {
+        crate::input::process_target::type_text(window, text, lease.deadline())
     }
 
     fn clear_clipboard(&self, lease: &InteractionLease) -> Result<OperationReport, AdapterError> {

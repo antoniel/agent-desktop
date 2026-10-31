@@ -56,14 +56,36 @@ pub(super) fn type_text(
     adapter: &dyn PlatformAdapter,
     context: &CommandContext,
 ) -> Result<Value, AppError> {
+    if args.process_target {
+        if args.text.is_some() && args.ref_id.is_some() {
+            return Err(AppError::invalid_input(
+                "type --process-target takes TEXT only, not a REF",
+            ));
+        }
+        if args.interval_ms.is_some() {
+            return Err(AppError::invalid_input(
+                "type --process-target does not take --interval-ms",
+            ));
+        }
+        let text = args.text_value().to_owned();
+        return agent_desktop_core::commands::process_target::type_text(
+            args.window_id.as_deref(),
+            &text,
+            adapter,
+            context,
+        );
+    }
+    let (Some(ref_id), Some(text)) = (args.ref_id.clone(), args.text.clone()) else {
+        return Err(AppError::invalid_input("type takes REF and TEXT"));
+    };
     let timeout_ms = match args.interval_ms {
         Some(_) => args.timeout_ms,
         None => helpers::normalize_action_timeout_ms(args.effective_timeout_ms()),
     };
     type_text_command::execute(
         type_text_command::TypeArgs {
-            ref_id: args.ref_id,
-            text: args.text,
+            ref_id,
+            text,
             timeout_ms,
             interval_ms: args.interval_ms,
         },

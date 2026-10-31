@@ -9,6 +9,7 @@ from safe_semantic_guard import (
     unique_target,
     unique_value,
     validate_command,
+    validate_process_target_action,
     validate_semantic_action,
 )
 
@@ -290,6 +291,48 @@ class ResultGuardTests(unittest.TestCase):
         validate_semantic_action(noop, "check", "noop")
         with self.assertRaises(SafetyError):
             validate_semantic_action(action_data(action="check"), "check", "noop")
+
+
+class ProcessTargetPolicyTests(unittest.TestCase):
+    def test_allows_only_allowlisted_input_to_the_owned_fixture_window(self):
+        scope = ["--window-id", WINDOW, "--process-target"]
+        for argv in [
+            ["press", "delete", *scope],
+            ["type", *scope, "safe-semantic-keys-4242"],
+        ]:
+            with self.subTest(argv=argv):
+                validate_command(argv, APP, WINDOW, True)
+
+    def test_rejects_other_windows_combos_payloads_and_unarmed_input(self):
+        scope = ["--window-id", WINDOW, "--process-target"]
+        for armed, argv in [
+            (False, ["press", "delete", *scope]),
+            (True, ["press", "cmd+q", *scope]),
+            (True, ["press", "delete", "--window-id", "w-other", "--process-target"]),
+            (True, ["type", *scope, "arbitrary user text"]),
+            (True, ["type", "--window-id", "w-other", "--process-target", "safe-semantic-x"]),
+            (True, ["press", "delete", *scope, "--headed"]),
+            (True, ["mouse-click", "--xy", "1,2", *scope]),
+        ]:
+            with self.subTest(argv=argv), self.assertRaises(SafetyError):
+                validate_command(argv, APP, WINDOW, armed)
+
+    def test_result_must_report_background_delivery(self):
+        result = {
+            "action": "press_key",
+            "process_target": True,
+            "window_id": WINDOW,
+            "disposition": {"delivery": "delivered_unverified", "retry": "unsafe"},
+        }
+        validate_process_target_action(result, "press")
+        validate_process_target_action({**result, "action": "type_text"}, "type")
+        for bad, requested in [
+            ({**result, "process_target": False}, "press"),
+            ({**result, "action": "type_text"}, "press"),
+            ({**result, "disposition": {"delivery": "not_delivered"}}, "press"),
+        ]:
+            with self.subTest(bad=bad), self.assertRaises(SafetyError):
+                validate_process_target_action(bad, requested)
 
 
 if __name__ == "__main__":

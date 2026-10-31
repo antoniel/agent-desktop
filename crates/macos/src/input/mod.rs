@@ -6,3 +6,5 @@ mod interactive_test;
 pub(crate) mod keyboard;
 pub(crate) mod mouse;
 pub(crate) mod pointer_report;
+#[cfg(target_os = "macos")]
+pub(crate) mod process_target;

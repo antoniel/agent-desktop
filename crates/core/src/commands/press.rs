@@ -11,6 +11,7 @@ pub struct PressArgs {
     pub combo: String,
     pub app: Option<String>,
     pub window_id: Option<String>,
+    pub process_target: bool,
     pub force: bool,
 }
 
@@ -25,7 +26,22 @@ pub fn execute(
     let deadline = crate::Deadline::standard()?;
 
     let mut pressed_process = None;
-    let result = if let Some((expected, window)) = target_app(&args, adapter, deadline)? {
+    let result = if let Some(window_id) =
+        super::process_target::requested(args.process_target, args.window_id.as_deref(), context)?
+    {
+        let (window, lease) = super::process_target::resolve_window(window_id, adapter, deadline)?;
+        let instance = window
+            .process_instance
+            .clone()
+            .filter(|instance| !instance.is_empty())
+            .ok_or_else(|| {
+                crate::AdapterError::stale_ref_because("The window has no process identity")
+                    .unsent()
+            })?;
+        let process = crate::ProcessIdentity::new(window.pid, instance);
+        pressed_process = Some(process.pid);
+        adapter.press_key_for_app(process, &combo, context.physical_input_policy(), &lease)?
+    } else if let Some((expected, window)) = target_app(&args, adapter, deadline)? {
         let lease = adapter.acquire_interaction_lease(deadline)?;
         let live = crate::commands::helpers::revalidate_app_for_mutation(
             adapter,
@@ -64,13 +80,11 @@ pub fn execute(
         )?
     };
     crate::cursor_overlay::follow_caret_after_key(adapter, context, pressed_process);
-    super::helpers::apply_scoped_post_action_wait(
-        serde_json::to_value(result)?,
-        args.app,
-        args.window_id,
-        adapter,
-        context,
-    )
+    let mut value = serde_json::to_value(result)?;
+    if args.process_target {
+        super::process_target::mark(&mut value, args.window_id.as_deref());
+    }
+    super::helpers::apply_scoped_post_action_wait(value, args.app, args.window_id, adapter, context)
 }
 
 fn target_app(

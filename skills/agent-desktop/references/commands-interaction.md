@@ -8,6 +8,8 @@ Commands that change UI state. Run `agent-desktop <command> --help` for flags.
 
 `press` is always physical keyboard input. `hover`, `drag`, `mouse-move`, `mouse-click` and `mouse-wheel` are physical cursor input and need `--headed`. Raw coordinates carry no window identity, so they never focus an app. `key-down`, `key-up`, `mouse-down` and `mouse-up` are reserved and never deliver input. They return `ACTION_NOT_SUPPORTED`, except that a headless `mouse-down` or `mouse-up` returns `POLICY_DENIED` first. Use `press`, `mouse-click` or `drag`.
 
+On macOS, `press` and `type` take `--window-id w-123 --process-target` to send keys to the process that owns that window, without activating it; `type` then takes TEXT only, no REF. See the platform skill for when to use it.
+
 Which gestures have a headless path:
 
 | Command | Headless |

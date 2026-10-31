@@ -130,6 +130,7 @@ fn press_with(
             combo: "cmd+k".into(),
             app: app.map(str::to_owned),
             window_id: window_id.map(str::to_owned),
+            process_target: false,
             force: false,
         },
         adapter,
@@ -346,3 +347,6 @@ fn matching_window_id_with_a_different_or_unknown_owner_refuses_without_delivery
         assert!(adapter.pressed_pid.lock().unwrap().is_none());
     }
 }
+
+#[path = "press_process_target_tests.rs"]
+mod process_target_tests;

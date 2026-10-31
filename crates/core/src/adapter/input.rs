@@ -1,6 +1,6 @@
 use crate::{
     AdapterError, ClipboardContent, ClipboardFormat, Deadline, DragParams, InteractionLease,
-    KeyCombo, MouseEvent, OperationReport,
+    KeyCombo, MouseEvent, OperationReport, WindowInfo,
 };
 
 /// `get_clipboard`/`set_clipboard` were removed pre-1.0 in favor of
@@ -47,6 +47,17 @@ pub trait InputOps: Send + Sync {
         _lease: &InteractionLease,
     ) -> Result<OperationReport, AdapterError> {
         Err(AdapterError::not_supported("drag"))
+    }
+
+    /// Types `text` into the focused element of a background process that
+    /// owns `window`, without activating it. Delivery is unverified.
+    fn type_text_for_window(
+        &self,
+        _window: &WindowInfo,
+        _text: &str,
+        _lease: &InteractionLease,
+    ) -> Result<crate::ActionResult, AdapterError> {
+        Err(AdapterError::not_supported("type_text_for_window"))
     }
 
     fn clear_clipboard(&self, _lease: &InteractionLease) -> Result<OperationReport, AdapterError> {

@@ -57,7 +57,7 @@ pub(crate) fn resolve_window_strict(
     Ok(resolved)
 }
 
-fn locate_verified_record_until(
+pub(crate) fn locate_verified_record_until(
     win: &WindowInfo,
     deadline: std::time::Instant,
 ) -> Result<(i64, WindowRecord), AdapterError> {

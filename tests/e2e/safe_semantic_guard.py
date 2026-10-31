@@ -20,6 +20,9 @@ SAFE_STATUS_IDS = {
     ("statictext", "text-echo"),
     ("statictext", "toggle-status"),
 }
+SAFE_PROCESS_TARGET_COMBOS = {"delete"}
+SAFE_TEXT_PATTERN = re.compile(r"safe-semantic-[A-Za-z0-9-]{1,48}")
+PROCESS_TARGET_ACTIONS = {"press": "press-key", "type": "type-text"}
 
 
 class SafetyError(ValueError):
@@ -167,19 +170,51 @@ def validate_command(argv, fixture_app, window_id, mutation_armed):
         ):
             raise SafetyError("find target is outside the fixture-safe allowlist")
         return
-    if command not in {"click", "type", "set-value", "toggle", "check", "uncheck"}:
+    if "--process-target" in argv:
+        _validate_process_target_command(argv, window_id, mutation_armed)
+        return
+    if command not in {"click", "focus", "type", "set-value", "toggle", "check", "uncheck"}:
         raise SafetyError(f"command is forbidden in the safe semantic suite: {command}")
     if not mutation_armed or not window_id:
         raise SafetyError("mutation requires an armed ownership and focus checkpoint")
-    if command in {"click", "toggle", "check", "uncheck"}:
+    if command in {"click", "focus", "toggle", "check", "uncheck"}:
         _validate_ref_action_tail(argv, 2)
         return
     if command in {"type", "set-value"}:
         _validate_ref_action_tail(argv, 3)
         value = argv[2]
-        if not re.fullmatch(r"safe-semantic-[A-Za-z0-9-]{1,48}", value):
+        if not SAFE_TEXT_PATTERN.fullmatch(value):
             raise SafetyError("set-value payload is outside the fixture-safe namespace")
         return
+
+
+def _validate_process_target_command(argv, window_id, mutation_armed):
+    if not mutation_armed or not window_id:
+        raise SafetyError("process-targeted input requires an armed fixture window checkpoint")
+    scope = ["--window-id", window_id, "--process-target"]
+    if argv[0] == "press":
+        if len(argv) != 5 or argv[2:] != scope or argv[1] not in SAFE_PROCESS_TARGET_COMBOS:
+            raise SafetyError("process-targeted press is outside the fixture-safe combo allowlist")
+        return
+    if argv[0] == "type":
+        if len(argv) != 5 or argv[1:4] != scope or not SAFE_TEXT_PATTERN.fullmatch(argv[4]):
+            raise SafetyError("process-targeted type is outside the fixture-safe namespace")
+        return
+    raise SafetyError(f"process targeting is forbidden for: {argv[0]}")
+
+
+def validate_process_target_action(data, requested):
+    if not isinstance(data, dict):
+        raise SafetyError("action data must be an object")
+    expected = PROCESS_TARGET_ACTIONS.get(requested)
+    action = _required_text(data, "action").replace("_", "-").casefold()
+    if expected is None or action != expected:
+        raise SafetyError("action result does not match the requested process-targeted command")
+    if data.get("process_target") is not True:
+        raise SafetyError("action result does not report process targeting")
+    disposition = data.get("disposition")
+    if not isinstance(disposition, dict) or disposition.get("delivery") != "delivered_unverified":
+        raise SafetyError("process-targeted input must report delivered_unverified")
 
 
 def unique_target(data, expected_role, expected_name):
@@ -280,6 +315,8 @@ def main():
         print(unique_value(load_envelope_stream(sys.stdin), sys.argv[2]))
     elif command == "semantic-action":
         validate_semantic_action(load_envelope_stream(sys.stdin), sys.argv[2], sys.argv[3])
+    elif command == "process-target-action":
+        validate_process_target_action(load_envelope_stream(sys.stdin), sys.argv[2])
     else:
         raise SafetyError(f"unknown guard command: {command}")
 

@@ -156,7 +156,10 @@ Inserts text into a text target at its insertion point, then reads the field bac
 
 ```bash
 agent-desktop type <REF> <TEXT> [--timeout-ms MS] [--interval-ms MS]
+agent-desktop type --window-id ID --process-target <TEXT>
 ```
+
+On macOS, `--window-id ID --process-target` types `TEXT` into the element that has keyboard focus in the window's process, without a REF and without activating the app. Give the field focus first with `focus @ref`. The result is `delivered_unverified` because nothing reads the field back; take a snapshot to confirm the text.
 
 <table>
   <thead>
