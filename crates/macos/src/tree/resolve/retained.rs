@@ -66,6 +66,7 @@ impl Drop for RetainedRefSession {
         STORE.with(|slot| {
             slot.borrow_mut().take();
         });
+        crate::tree::retained_windows::clear();
     }
 }
 
@@ -151,6 +152,12 @@ pub(crate) fn candidate_match(
     Ok(super::resolve_search::match_native_or_text_identity(
         entry, evidence,
     ))
+}
+
+/// Whether a retained-ref session is open on this thread. Window handles are
+/// retained only inside one, so they never outlive the command host session.
+pub(crate) fn active() -> bool {
+    STORE.with(|slot| slot.borrow().is_some())
 }
 
 #[cfg(all(test, target_os = "macos"))]

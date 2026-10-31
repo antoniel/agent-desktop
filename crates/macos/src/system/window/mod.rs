@@ -1,5 +1,7 @@
 pub(crate) mod cg_window;
 pub(crate) mod cg_window_exact;
+#[cfg(target_os = "macos")]
+pub(crate) mod remote_window;
 pub(crate) mod window_ax_state;
 pub(crate) mod window_bridge;
 pub(crate) mod window_inventory;

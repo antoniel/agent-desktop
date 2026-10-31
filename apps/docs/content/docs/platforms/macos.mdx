@@ -71,6 +71,10 @@ Judge delivery by observation. AX return codes do not prove an effect: an app ca
 
 `supported_surfaces` lists `window`, `focused`, `menu`, `menubar`, `sheet`, `popover`, and `alert`. Use `--surface menubar` for the File, Edit, and View menus and for menu bar status items. macOS has no shell surfaces; Notification Center is reached through the notification commands. See [Surfaces](/desktop/surfaces).
 
+## Windows on another Space
+
+`snapshot --window-id` and the refs it returns work for a window on another Space, which `AXWindows` does not list. A window that the `--session` observed keeps its accessibility handle while the command host runs; any other window is found by its window number.
+
 ## Keys and notifications
 
 - The primary modifier is `cmd`: `press cmd+c`. Punctuation keys work as the symbol or by name (`comma`, `period`, `slash`).
