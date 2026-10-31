@@ -4,12 +4,15 @@
 //! app handled them is for the caller to verify, so every result is
 //! `delivered_unverified`.
 
-use agent_desktop_core::{AdapterError, Deadline, DeliverySemantics, ErrorCode, WindowInfo};
+use agent_desktop_core::{AdapterError, Deadline, DeliverySemantics, ErrorCode, Rect, WindowInfo};
 
-/// The process that owns the window, with its identity token.
+/// The window that receives the events: owner process, its identity token,
+/// the window number and the window frame in global points.
 pub(crate) struct WindowTarget {
     pub(crate) pid: i32,
     pub(crate) instance: String,
+    pub(crate) window_number: i64,
+    pub(crate) bounds: Rect,
 }
 
 impl WindowTarget {
@@ -17,7 +20,7 @@ impl WindowTarget {
     /// the window's process identity. Nothing is sent when this fails.
     pub(crate) fn resolve(window: &WindowInfo, deadline: Deadline) -> Result<Self, AdapterError> {
         let instant = crate::tree::locator_deadline::from_operation(deadline)?;
-        let (_, record) =
+        let (window_number, record) =
             crate::system::window::window_resolve::locate_verified_record_until(window, instant)
                 .map_err(unsent)?;
         let instance = window
@@ -28,6 +31,8 @@ impl WindowTarget {
         Ok(Self {
             pid: record.pid,
             instance,
+            window_number,
+            bounds: record.bounds,
         })
     }
 

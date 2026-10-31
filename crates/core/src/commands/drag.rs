@@ -41,6 +41,9 @@ pub struct DragArgs {
     pub drop_delay_ms: Option<u64>,
     pub timeout_ms: Option<u64>,
     pub wait_for_scope: WaitForScope,
+    /// With `process_target`, the window whose process receives the drag.
+    pub window_id: Option<String>,
+    pub process_target: bool,
 }
 
 pub fn execute(
@@ -48,6 +51,16 @@ pub fn execute(
     adapter: &dyn PlatformAdapter,
     context: &CommandContext,
 ) -> Result<Value, AppError> {
+    if let Some(window_id) =
+        super::process_target::requested(args.process_target, args.window_id.as_deref(), context)?
+    {
+        return background_drag(window_id, &args, adapter, context);
+    }
+    if args.window_id.is_some() {
+        return Err(AppError::invalid_input(
+            "--window-id on drag requires --process-target",
+        ));
+    }
     require_cursor_policy(context, "drag")?;
     require_pointer_capability(adapter)?;
     validate_post_action_wait(context)?;
@@ -191,6 +204,57 @@ pub fn execute(
     };
     apply_post_action_wait(response, wait_entry, adapter, context)
 }
+
+/// Delivers the drag to the named window's process in the background: the
+/// cursor does not move and the app is not activated. Both endpoints are
+/// global coordinates inside the window.
+fn background_drag(
+    window_id: &str,
+    args: &DragArgs,
+    adapter: &dyn PlatformAdapter,
+    context: &CommandContext,
+) -> Result<Value, AppError> {
+    let (Some(from), Some(to)) = (args.from.xy, args.to.xy) else {
+        return Err(AppError::invalid_input(
+            "--process-target drag takes --from-xy and --to-xy",
+        ));
+    };
+    validate_post_action_wait(context)?;
+    let deadline = point_deadline(args.timeout_ms)?;
+    let params = DragParams {
+        from: crate::Point {
+            x: from.0,
+            y: from.1,
+        },
+        to: crate::Point { x: to.0, y: to.1 },
+        duration_ms: args.duration_ms,
+        drop_delay_ms: args.drop_delay_ms,
+    };
+    params.validate(deadline)?;
+    let (window, lease) = super::process_target::resolve_window(window_id, adapter, deadline)?;
+    let report = adapter.drag_for_window(&window, params, &lease)?;
+    drop(lease);
+    let response = operation_response(
+        &report,
+        json!({
+            "from": { "x": from.0, "y": from.1 },
+            "to": { "x": to.0, "y": to.1 },
+            "window_id": window.id,
+            "process_target": true,
+        }),
+    )?;
+    crate::commands::helpers::apply_scoped_post_action_wait(
+        response,
+        None,
+        Some(window.id),
+        adapter,
+        context,
+    )
+}
+
+#[cfg(test)]
+#[path = "drag_process_target_tests.rs"]
+mod process_target_tests;
 
 #[cfg(test)]
 #[path = "drag_tests.rs"]

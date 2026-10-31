@@ -333,6 +333,8 @@ pub(super) mod mouse_drag;
 pub(super) mod mouse_drag_state;
 pub(crate) mod mouse_move;
 pub(crate) mod mouse_scroll;
+#[cfg(target_os = "macos")]
+pub(crate) mod process_target;
 #[cfg(all(test, target_os = "macos"))]
 #[path = "mouse_tests.rs"]
 mod tests;

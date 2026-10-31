@@ -81,6 +81,24 @@ assert "headed drag delivers one source-tracked gesture" \
     "$([ "$(json_field "$drag_output" ok)" = "True" ] && [ "$drag_effect" = "1" ] && echo 1 || echo 0)" \
     "from=$drag_from to=$drag_to before=$drag_before after=$drag_after"
 
+note "Process-targeted click and drag on the focused fixture canvas"
+drag_window="$(json_field "$drag_snapshot" data.window.id)"
+drag_center="$(printf '%s' "$drag_snapshot" | python3 "$json_tool" tree drag-canvas center 2>/dev/null)" || drag_center=""
+bg_click="$("$bin" mouse-click --xy "$drag_center" --window-id "$drag_window" --process-target 2>/dev/null)"
+sleep 0.3
+require_value bg_click_state drag-canvas-status
+assert "process-targeted mouse-click reaches the canvas without --headed" \
+    "$([ "$(json_field "$bg_click" ok)" = "True" ] && [ "$bg_click_state" = "click" ] && echo 1 || echo 0)" \
+    "window=$drag_window at=$drag_center state=$bg_click_state error=$(json_field "$bg_click" error.code)"
+bg_distance="$(python3 -c "print(round(${drag_to%%,*} - ${drag_from%%,*}))")"
+bg_drag="$("$bin" drag --from-xy "$drag_from" --to-xy "$drag_to" --window-id "$drag_window" \
+    --process-target --duration 400 --drop-delay 300 2>/dev/null)"
+sleep 0.4
+require_value bg_drag_state drag-canvas-status
+assert "process-targeted drag delivers the whole gesture at the requested points" \
+    "$([ "$(json_field "$bg_drag" ok)" = "True" ] && [ "$bg_drag_state" = "dragged-$bg_distance" ] && echo 1 || echo 0)" \
+    "window=$drag_window from=$drag_from to=$drag_to state=$bg_drag_state error=$(json_field "$bg_drag" error.code)"
+
 note "Disclosure collapse and expand"
 # SwiftUI DisclosureGroup does not expose expanded-state via AXValue; the honest
 # oracle is whether the disclosed child content appears/disappears in the tree.

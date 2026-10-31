@@ -368,6 +368,7 @@ await_status text_after text-echo equal "$text_value" || fail "semantic set-valu
 pass "AX set-value produced the fixture-owned binding change"
 source "$here/scenarios/silent-text.sh"
 source "$here/scenarios/process-target-keys.sh"
+source "$here/scenarios/process-target-pointer.sh"
 
 read_status toggle_before toggle-status || fail "toggle status is unavailable"
 [ "$toggle_before" = "off" ] || fail "fresh toggle state is not clean"

@@ -161,6 +161,8 @@ fn drag_args(snapshot_id: String, scope: WaitForScope) -> DragArgs {
         drop_delay_ms: None,
         timeout_ms: None,
         wait_for_scope: scope,
+        window_id: None,
+        process_target: false,
     }
 }
 

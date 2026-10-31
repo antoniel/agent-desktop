@@ -35,6 +35,28 @@ impl InputOps for MacOSAdapter {
         Ok(report)
     }
 
+    fn mouse_event_for_window(
+        &self,
+        window: &WindowInfo,
+        event: MouseEvent,
+        lease: &InteractionLease,
+    ) -> Result<OperationReport, AdapterError> {
+        let report = crate::input::pointer_report::pointer_report(&event);
+        crate::input::mouse::process_target::click(window, &event, lease.deadline())?;
+        Ok(report)
+    }
+
+    fn drag_for_window(
+        &self,
+        window: &WindowInfo,
+        params: DragParams,
+        lease: &InteractionLease,
+    ) -> Result<OperationReport, AdapterError> {
+        let report = OperationReport::drag_dispatched(&params);
+        crate::input::mouse::process_target::drag(window, &params, lease.deadline())?;
+        Ok(report)
+    }
+
     fn type_text_for_window(
         &self,
         window: &WindowInfo,

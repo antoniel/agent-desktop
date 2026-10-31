@@ -6,9 +6,9 @@ Commands that change UI state. Run `agent-desktop <command> --help` for flags.
 
 `--headed` is global (`agent-desktop --headed click @s8f3k2p9:e5`) and applies to every `batch` entry. A headed action may focus the exact source window first, and a pointer action needs a verified target point.
 
-`press` is always physical keyboard input. `hover`, `drag`, `mouse-move`, `mouse-click` and `mouse-wheel` are physical cursor input and need `--headed`. Raw coordinates carry no window identity, so they never focus an app. `key-down`, `key-up`, `mouse-down` and `mouse-up` are reserved and never deliver input. They return `ACTION_NOT_SUPPORTED`, except that a headless `mouse-down` or `mouse-up` returns `POLICY_DENIED` first. Use `press`, `mouse-click` or `drag`.
+`press` is always physical keyboard input. `hover`, `drag`, `mouse-move`, `mouse-click` and `mouse-wheel` are physical cursor input and need `--headed`, except the macOS `--process-target` form of `mouse-click` and `drag` described below. Raw coordinates carry no window identity, so they never focus an app. `key-down`, `key-up`, `mouse-down` and `mouse-up` are reserved and never deliver input. They return `ACTION_NOT_SUPPORTED`, except that a headless `mouse-down` or `mouse-up` returns `POLICY_DENIED` first. Use `press`, `mouse-click` or `drag`.
 
-On macOS, `press` and `type` take `--window-id w-123 --process-target` to send keys to the process that owns that window, without activating it; `type` then takes TEXT only, no REF. See the platform skill for when to use it.
+On macOS, `press`, `type`, `mouse-click` and `drag` take `--window-id w-123 --process-target` to send input to the process that owns that window, without activating it or moving the cursor. `type` then takes TEXT only, no REF, and `drag` takes coordinates only. See the platform skill for when to use it.
 
 Which gestures have a headless path:
 
@@ -16,7 +16,7 @@ Which gestures have a headless path:
 |---------|----------|
 | `click`, `set-value`, `clear`, `select`, `check`, `uncheck`, `toggle`, `expand`, `collapse`, `scroll`, `scroll-to` | Yes, where the element advertises a semantic action (not `scroll` on Linux) |
 | `type`, `right-click`, `focus` | OS-dependent. Read the platform skill for which need `--headed` |
-| `double-click`, `triple-click`, `hover`, `drag`, `mouse-*` | No. They need `--headed` |
+| `double-click`, `triple-click`, `hover`, `drag`, `mouse-*` | No. They need `--headed`, except `mouse-click` and `drag` with `--process-target` on macOS |
 
 Native cross-app drag and drop may not start from synthetic events. It works for same-view drags and for web drag and drop.
 

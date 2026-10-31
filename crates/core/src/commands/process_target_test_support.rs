@@ -2,14 +2,16 @@
 //! tests. Records which window's process received background input and fails
 //! the test if the input ever takes a focusing or global path.
 
-use crate::AdapterError;
 use crate::actions::action_request::ActionRequest;
 use crate::actions::action_result::ActionResult;
 use crate::adapter::{ActionOps, InputOps, NativeHandle, ObservationOps, SystemOps};
+use crate::{AdapterError, DragParams, MouseEvent, OperationReport};
 use std::sync::Mutex;
 
 #[derive(Default)]
 pub(crate) struct TwoInstances {
+    pub(crate) clicked: Mutex<Option<(String, MouseEvent)>>,
+    pub(crate) dragged: Mutex<Option<(String, DragParams)>>,
     pub(crate) typed: Mutex<Option<(String, String)>>,
 }
 
@@ -64,6 +66,44 @@ impl ActionOps for TwoInstances {
 }
 
 impl InputOps for TwoInstances {
+    fn mouse_event(
+        &self,
+        _event: MouseEvent,
+        _lease: &crate::InteractionLease,
+    ) -> Result<OperationReport, AdapterError> {
+        panic!("a process-targeted click must never move the global cursor")
+    }
+
+    fn drag(
+        &self,
+        _params: DragParams,
+        _lease: &crate::InteractionLease,
+    ) -> Result<OperationReport, AdapterError> {
+        panic!("a process-targeted drag must never move the global cursor")
+    }
+
+    fn mouse_event_for_window(
+        &self,
+        window: &crate::WindowInfo,
+        event: MouseEvent,
+        _lease: &crate::InteractionLease,
+    ) -> Result<OperationReport, AdapterError> {
+        let report = OperationReport::pointer_dispatched(&event, false);
+        *self.clicked.lock().unwrap() = Some((window.id.clone(), event));
+        Ok(report)
+    }
+
+    fn drag_for_window(
+        &self,
+        window: &crate::WindowInfo,
+        params: DragParams,
+        _lease: &crate::InteractionLease,
+    ) -> Result<OperationReport, AdapterError> {
+        let report = OperationReport::drag_dispatched(&params);
+        *self.dragged.lock().unwrap() = Some((window.id.clone(), params));
+        Ok(report)
+    }
+
     fn type_text_for_window(
         &self,
         window: &crate::WindowInfo,

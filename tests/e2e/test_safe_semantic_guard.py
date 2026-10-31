@@ -299,6 +299,7 @@ class ProcessTargetPolicyTests(unittest.TestCase):
         for argv in [
             ["press", "delete", *scope],
             ["type", *scope, "safe-semantic-keys-4242"],
+            ["mouse-click", "--xy", "442,315.5", *scope],
         ]:
             with self.subTest(argv=argv):
                 validate_command(argv, APP, WINDOW, True)
@@ -312,7 +313,11 @@ class ProcessTargetPolicyTests(unittest.TestCase):
             (True, ["type", *scope, "arbitrary user text"]),
             (True, ["type", "--window-id", "w-other", "--process-target", "safe-semantic-x"]),
             (True, ["press", "delete", *scope, "--headed"]),
-            (True, ["mouse-click", "--xy", "1,2", *scope]),
+            (True, ["mouse-click", "--xy", "1,2", "--window-id", "w-other", "--process-target"]),
+            (True, ["mouse-click", "--xy", "1,2", "--button", "right", *scope]),
+            (True, ["mouse-click", "--xy", "-5,2", *scope]),
+            (True, ["drag", "--from-xy", "1,2", "--to-xy", "3,4", *scope]),
+            (True, ["hover", "--xy", "1,2", *scope]),
         ]:
             with self.subTest(argv=argv), self.assertRaises(SafetyError):
                 validate_command(argv, APP, WINDOW, armed)

@@ -49,6 +49,31 @@ pub trait InputOps: Send + Sync {
         Err(AdapterError::not_supported("drag"))
     }
 
+    /// Delivers a click to one window of a background process without moving
+    /// the system cursor or activating the app. The point is in global
+    /// coordinates and must fall inside the window. Delivery is unverified:
+    /// the process received the events; the caller checks the outcome.
+    fn mouse_event_for_window(
+        &self,
+        _window: &WindowInfo,
+        _event: MouseEvent,
+        _lease: &InteractionLease,
+    ) -> Result<OperationReport, AdapterError> {
+        Err(AdapterError::not_supported("mouse_event_for_window"))
+    }
+
+    /// Delivers a left-button drag to one window of a background process,
+    /// with the same contract as [`Self::mouse_event_for_window`]. Both
+    /// endpoints must fall inside the window.
+    fn drag_for_window(
+        &self,
+        _window: &WindowInfo,
+        _params: DragParams,
+        _lease: &InteractionLease,
+    ) -> Result<OperationReport, AdapterError> {
+        Err(AdapterError::not_supported("drag_for_window"))
+    }
+
     /// Types `text` into the focused element of a background process that
     /// owns `window`, without activating it. Delivery is unverified.
     fn type_text_for_window(

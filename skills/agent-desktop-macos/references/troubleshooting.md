@@ -54,7 +54,7 @@ For Automation, open Privacy & Security > Automation and allow the launching app
 
 **Cause.** The semantic path could not finish, and the physical path is blocked because the command ran headless. Hover, drag, double-click, triple-click and cursor-moving mouse commands always need `--headed`. Coordinate `right-click` is also blocked headless.
 
-**Fix.** Add the global `--headed` flag only if physical input is what you want. Example: `agent-desktop --headed mouse-click --xy 640,400 --button right`. Take coordinates from `get @ref --property bounds`.
+**Fix.** Add the global `--headed` flag only if physical input is what you want. Example: `agent-desktop --headed mouse-click --xy 640,400 --button right`. Take coordinates from `get @ref --property bounds`. To click or drag without `--headed` and without moving the cursor, pass `--window-id ID --process-target` to `mouse-click` or `drag`.
 
 ## APP_UNRESPONSIVE after right-click
 

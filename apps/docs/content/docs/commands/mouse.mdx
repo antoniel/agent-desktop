@@ -4,7 +4,7 @@ navTitle: Mouse
 description: Reference for hover, drag, mouse-move, mouse-click, mouse-down, mouse-up, and mouse-wheel. Cursor movement needs --headed, and the held-button commands fail closed.
 ---
 
-Every mouse command moves the real cursor, so each one needs the global `--headed` flag. Without it the command returns `POLICY_DENIED` with `not_delivered` and sends nothing:
+Every mouse command moves the real cursor, so each one needs the global `--headed` flag. On macOS, `mouse-click` and `drag` also have a [background form](#background-pointer-input-macos) that needs no `--headed`. Without it the command returns `POLICY_DENIED` with `not_delivered` and sends nothing:
 
 ```json
 {
@@ -131,6 +131,17 @@ agent-desktop --headed mouse-click --xy 500,300 [--button left|right|middle] [--
 ```
 
 `target.point` is where the click was dispatched; it does not prove which app received it. Before you click at bounds read from a snapshot, check `get --property bounds` and its `live` flag.
+
+## Background pointer input (macOS)
+
+`mouse-click` and `drag` accept `--window-id ID --process-target`. agent-desktop posts the events to the process that owns the window, bound to that window, so the cursor does not move, the app is not activated, and the window can sit behind other windows. Coordinates are global screen points inside the window's frame from `list-windows`; a point outside it returns `INVALID_ARGS` and sends nothing. `drag` takes `--from-xy` and `--to-xy`, uses the left button, and always releases it at the last point it delivered. The flag cannot be combined with `--headed`.
+
+```bash
+agent-desktop mouse-click --xy 1720,1150 --window-id w-30137 --process-target
+agent-desktop drag --from-xy 1990,1300 --to-xy 2100,1380 --window-id w-30137 --process-target
+```
+
+The result is `delivered_unverified`: the process received the events, and nothing confirms the app acted on them. In a window that is not key, AppKit passes a click only to a view that accepts the first mouse (`acceptsFirstMouse(for:)`). SwiftUI buttons do; a custom `NSView` that does not override it ignores the click. Snapshot again to check the effect.
 
 ## mouse-down
 

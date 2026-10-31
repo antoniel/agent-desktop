@@ -256,6 +256,8 @@ fn drag_none_scrolls_once_then_dispatches_revalidated_endpoints_once() {
             drop_delay_ms: None,
             timeout_ms: None,
             wait_for_scope: drag::WaitForScope::default(),
+            window_id: None,
+            process_target: false,
         },
         &adapter,
         &CommandContext::default().with_headed(true),
@@ -295,6 +297,8 @@ fn drag_args(timeout_ms: Option<u64>) -> drag::DragArgs {
         drop_delay_ms: None,
         timeout_ms,
         wait_for_scope: drag::WaitForScope::default(),
+        window_id: None,
+        process_target: false,
     }
 }
 

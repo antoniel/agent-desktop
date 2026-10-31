@@ -221,6 +221,36 @@ fn process_target_flags_require_each_other() {
 }
 
 #[test]
+fn pointer_process_target_flags_require_each_other() {
+    assert!(
+        MouseClickArgs::try_parse_from(["mouse-click", "--xy", "1,2", "--window-id", "w-1"])
+            .is_err()
+    );
+    assert!(
+        MouseClickArgs::try_parse_from([
+            "mouse-click",
+            "--xy",
+            "1,2",
+            "--window-id",
+            "w-1",
+            "--process-target"
+        ])
+        .is_ok()
+    );
+    assert!(
+        DragCliArgs::try_parse_from([
+            "drag",
+            "--from-xy",
+            "1,2",
+            "--to-xy",
+            "3,4",
+            "--process-target"
+        ])
+        .is_err()
+    );
+}
+
+#[test]
 fn type_batch_json_with_process_target_takes_text_only() {
     let args: TypeArgs = serde_json::from_value(serde_json::json!({
         "text": "hoje", "window_id": "w-7", "process_target": true

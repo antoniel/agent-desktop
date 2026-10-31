@@ -158,6 +158,8 @@ fn xy_args(drop_delay_ms: Option<u64>) -> DragArgs {
         drop_delay_ms,
         timeout_ms: None,
         wait_for_scope: WaitForScope::default(),
+        window_id: None,
+        process_target: false,
     }
 }
 
@@ -316,10 +318,7 @@ fn cross_app_args(snapshot_id: String) -> DragArgs {
             ref_id: Some(format!("@{}:e2", snapshot_id)),
             xy: None,
         },
-        duration_ms: None,
-        drop_delay_ms: None,
-        timeout_ms: None,
-        wait_for_scope: WaitForScope::default(),
+        ..xy_args(None)
     }
 }
 

@@ -22,7 +22,12 @@ SAFE_STATUS_IDS = {
 }
 SAFE_PROCESS_TARGET_COMBOS = {"delete"}
 SAFE_TEXT_PATTERN = re.compile(r"safe-semantic-[A-Za-z0-9-]{1,48}")
-PROCESS_TARGET_ACTIONS = {"press": "press-key", "type": "type-text"}
+PROCESS_TARGET_ACTIONS = {
+    "press": "press-key",
+    "type": "type-text",
+    "mouse-click": "mouse-click",
+}
+POINT_PATTERN = re.compile(r"[0-9]{1,5}(\.[0-9]{1,3})?,[0-9]{1,5}(\.[0-9]{1,3})?")
 
 
 class SafetyError(ValueError):
@@ -153,7 +158,7 @@ def validate_command(argv, fixture_app, window_id, mutation_armed):
         return
     if command == "get":
         if not window_id or len(argv) != 4 or not REF_PATTERN.fullmatch(argv[1]) \
-                or argv[2:] != ["--property", "value"]:
+                or argv[2:] not in (["--property", "value"], ["--property", "bounds"]):
             raise SafetyError("get requires a qualified fixture value target")
         return
     if command == "find":
@@ -199,6 +204,11 @@ def _validate_process_target_command(argv, window_id, mutation_armed):
     if argv[0] == "type":
         if len(argv) != 5 or argv[1:4] != scope or not SAFE_TEXT_PATTERN.fullmatch(argv[4]):
             raise SafetyError("process-targeted type is outside the fixture-safe namespace")
+        return
+    if argv[0] == "mouse-click":
+        if len(argv) != 6 or argv[1] != "--xy" or argv[3:] != scope \
+                or not POINT_PATTERN.fullmatch(argv[2]):
+            raise SafetyError("process-targeted mouse-click is not a plain fixture-window click")
         return
     raise SafetyError(f"process targeting is forbidden for: {argv[0]}")
 

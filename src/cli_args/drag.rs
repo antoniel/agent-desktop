@@ -55,4 +55,18 @@ pub(crate) struct DragCliArgs {
     )]
     #[serde(default)]
     pub wait_for_scope: Option<WaitForScopeArg>,
+    #[arg(
+        long = "window-id",
+        requires = "process_target",
+        help = "Window whose process receives the drag; requires --process-target"
+    )]
+    #[serde(default)]
+    pub window_id: Option<String>,
+    #[arg(
+        long,
+        requires = "window_id",
+        help = "Post the drag to the window's process in the background: no cursor move, no activation; takes --from-xy/--to-xy inside the window; cannot be used with --headed"
+    )]
+    #[serde(default)]
+    pub process_target: bool,
 }

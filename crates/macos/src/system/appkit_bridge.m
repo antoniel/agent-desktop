@@ -268,3 +268,73 @@ AgentDesktopBytesResult agent_desktop_copy_workspace_snapshot_json(void) {
 void agent_desktop_free_bridge_bytes(uint8_t *bytes) {
     free(bytes);
 }
+
+// Posts one mouse event to a background process, bound to one of its windows.
+// CGEventPostToPid skips the window server's hit-testing, so a bare CGEvent
+// carries window number 0 and a screen location the app cannot map into a
+// view. NSEvent binds the window and a window-local location; its CGEvent then
+// reaches the process without moving the system pointer or activating the app.
+// kind: 0 down, 1 up, 2 dragged. button: 0 left, 1 right, 2 other.
+// localX/localYFromTop: window-local point in points, origin at the top left.
+// Returns 0 posted, 1 bad arguments, 2 could not create the event.
+int32_t agent_desktop_post_window_mouse(
+    int32_t pid,
+    int64_t windowNumber,
+    int32_t kind,
+    int32_t button,
+    double localX,
+    double localYFromTop,
+    int64_t clickCount,
+    uint64_t modifierFlags
+) {
+    @try {
+        @autoreleasepool {
+            NSEventType type;
+            switch (button) {
+                case 0:
+                    type = kind == 0 ? NSEventTypeLeftMouseDown
+                         : kind == 1 ? NSEventTypeLeftMouseUp : NSEventTypeLeftMouseDragged;
+                    break;
+                case 1:
+                    type = kind == 0 ? NSEventTypeRightMouseDown
+                         : kind == 1 ? NSEventTypeRightMouseUp : NSEventTypeRightMouseDragged;
+                    break;
+                case 2:
+                    type = kind == 0 ? NSEventTypeOtherMouseDown
+                         : kind == 1 ? NSEventTypeOtherMouseUp : NSEventTypeOtherMouseDragged;
+                    break;
+                default:
+                    return 1;
+            }
+            if (kind < 0 || kind > 2 || windowNumber <= 0 || pid <= 0
+                || !isfinite(localX) || !isfinite(localYFromTop)) {
+                return 1;
+            }
+            // NSEvent flips Y around the primary display height when it builds
+            // the CGEvent; pre-flip so the CGEvent carries the top-left point.
+            double primaryHeight = CGDisplayBounds(CGMainDisplayID()).size.height;
+            NSPoint location = NSMakePoint(localX, primaryHeight - localYFromTop);
+            NSEvent *native = [NSEvent mouseEventWithType:type
+                                                 location:location
+                                            modifierFlags:(NSEventModifierFlags)modifierFlags
+                                                timestamp:[[NSProcessInfo processInfo] systemUptime]
+                                             windowNumber:(NSInteger)windowNumber
+                                                  context:nil
+                                              eventNumber:1
+                                               clickCount:(NSInteger)clickCount
+                                                 pressure:kind == 1 ? 0.0f : 1.0f];
+            CGEventRef event = native.CGEvent;
+            if (event == NULL) {
+                return 2;
+            }
+            if (button != 0) {
+                CGEventSetIntegerValueField(event, kCGMouseEventButtonNumber, button);
+            }
+            CGEventPostToPid((pid_t)pid, event);
+            return 0;
+        }
+    } @catch (NSException *exception) {
+        (void)exception;
+        return 2;
+    }
+}

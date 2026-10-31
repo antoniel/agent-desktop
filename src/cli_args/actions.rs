@@ -255,7 +255,7 @@ pub(crate) struct MouseMoveArgs {
 pub(crate) struct MouseClickArgs {
     #[arg(
         long,
-        help = "Absolute coordinates as x,y; requires --headed; write a negative value with = (--xy=-100,50)"
+        help = "Absolute coordinates as x,y; requires --headed unless --process-target; write a negative value with = (--xy=-100,50)"
     )]
     pub xy: String,
     #[arg(
@@ -275,6 +275,20 @@ pub(crate) struct MouseClickArgs {
     )]
     #[serde(default)]
     pub modifiers: Vec<String>,
+    #[arg(
+        long = "window-id",
+        requires = "process_target",
+        help = "Window whose process receives the click; requires --process-target"
+    )]
+    #[serde(default)]
+    pub window_id: Option<String>,
+    #[arg(
+        long,
+        requires = "window_id",
+        help = "Post the click to the window's process in the background: no cursor move, no activation; works without --headed; cannot be used with --headed"
+    )]
+    #[serde(default)]
+    pub process_target: bool,
 }
 
 #[derive(Parser, Debug, Deserialize)]

@@ -77,12 +77,12 @@ helper that returns a bare `@eN`.
 | `run.sh` | Global gate, fixture lifecycle, semantic suite orchestration |
 | `harness.sh` | Exclusivity acknowledgement, isolated `HOME`/`TMPDIR`, immutable binary and FFI staging |
 | `lib.sh` | Fail-closed assertions and exact `{ref_id,snapshot_id}` target helpers |
-| `safe-semantic.sh`, `scenarios/silent-text.sh`, `scenarios/process-target-keys.sh`, `safe_semantic_guard.py` | Strict headless non-interference gate that runs before the fixture suite, including `press` and `type` with `--process-target` to the background fixture |
+| `safe-semantic.sh`, `scenarios/silent-text.sh`, `scenarios/process-target-keys.sh`, `scenarios/process-target-pointer.sh`, `safe_semantic_guard.py` | Strict headless non-interference gate that runs before the fixture suite, including `press`, `type` and `mouse-click` with `--process-target` to the background fixture |
 | `scenarios/observation.sh` | Snapshots, locators, namespace pinning, strict twins |
 | `scenarios/interaction.sh` | Headless/headed actions and exact-once effects |
 | `scenarios/acceptance.sh` | Named AE1-AE7 acceptance contract |
 | `scenarios/reliability.sh` | Stale refs, waits, drill-down, sessions |
-| `scenarios/surfaces.sh` | Sheets, menus, drag, disclosure |
+| `scenarios/surfaces.sh` | Sheets, menus, drag (headed and `--process-target`), disclosure |
 | `scenarios/error_contract.sh` | Exit code and `error.code` envelopes an agent branches on, `batch` continue/stop/reject semantics |
 | `scenarios/keyboard.sh` | `press` key combos observed through the fixture's own text readout, blocked-combo and unknown-modifier refusals |
 | `scenarios/trace_performance.sh` | Trace artifacts, redaction, timings, cleanup |

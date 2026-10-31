@@ -97,6 +97,8 @@ pub(super) fn drag(
                 .wait_for_scope
                 .map(crate::cli_args::drag::WaitForScopeArg::to_core)
                 .unwrap_or_default(),
+            window_id: args.window_id,
+            process_target: args.process_target,
         },
         adapter,
         context,
@@ -125,6 +127,8 @@ pub(super) fn mouse_click(
             button: parse_mouse_button(&args.button)?,
             count: args.count,
             modifiers: parse_modifiers(&args.modifiers)?,
+            window_id: args.window_id,
+            process_target: args.process_target,
         },
         adapter,
         context,

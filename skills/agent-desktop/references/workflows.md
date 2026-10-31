@@ -123,7 +123,7 @@ agent-desktop --headed drag --from @s8f3k2p9:e3 --to @s8f3k2p9:e8
 agent-desktop --headed drag --from-xy 100,200 --to-xy 500,400 --drop-delay 800
 ```
 
-Drag is physical and needs `--headed`. Confirm the drop by reading the destination state, not the command's `ok`.
+Drag is physical and needs `--headed`. On macOS, `drag --from-xy X,Y --to-xy X,Y --window-id ID --process-target` drags inside one window without it. Confirm the drop by reading the destination state, not the command's `ok`.
 
 ## Multiple windows
 

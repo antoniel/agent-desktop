@@ -77,6 +77,7 @@ Judge delivery by observation. AX return codes do not prove an effect: an app ca
 - `cmd+q`, `cmd+shift+q`, `cmd+alt+esc`, `ctrl+cmd+q`, and `cmd+shift+delete` return `POLICY_DENIED` unless you pass `--force`. To quit an app, use `close-app`.
 - `press cmd+s --app "TextEdit"` sends keys to one app without focusing it.
 - `press cmd+k --window-id w-123 --process-target` and `type --window-id w-123 --process-target "text"` send keys to the process that owns that window, which tells apart several instances of one app. The process instance is checked before delivery, so a restarted app never receives keys meant for the old one.
+- `mouse-click` and `drag` take the same `--window-id ID --process-target` pair. The events are bound to that window, the cursor stays where it is, and `--headed` is not needed.
 - When agent-desktop opens Notification Center, it closes it afterward and restores the previous focus. Pass `--expected-app` and `--expected-title` on a single dismiss or action, because the stack shifts. Use `wait --notification --app "App"` for banners that vanish before you can list them.
 
 ## Chromium and Electron
