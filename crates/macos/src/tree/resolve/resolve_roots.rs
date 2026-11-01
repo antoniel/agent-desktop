@@ -167,7 +167,10 @@ fn source_window_scoped_roots(
         )?;
     }
     let windows = read_root_array(application, "AXWindows", context)?.unwrap_or_default();
-    let window = if entry.source.source_window_id.is_some() {
+    let retained = crate::tree::retained_windows::for_entry(entry, deadline)?;
+    let window = if retained.is_some() {
+        retained
+    } else if entry.source.source_window_id.is_some() {
         window_by_number(&windows, entry, context)?
     } else {
         window_by_title(

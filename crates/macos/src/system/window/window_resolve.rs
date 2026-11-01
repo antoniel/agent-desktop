@@ -134,7 +134,9 @@ fn resolve_window_element_strict(
     let (window_number, record) = locate_verified_record_until(win, deadline)?;
     crate::tree::locator_deadline::remaining(deadline)?;
     let pid = crate::system::process::process_identity::to_pid_t(win.pid)?;
-    ax_window_element_for_number(pid, window_number, record.title.as_deref(), deadline)?
+    let current =
+        ax_window_element_for_number(pid, window_number, record.title.as_deref(), deadline)?;
+    crate::tree::retained_windows::resolve(win, current, deadline)?
         .ok_or_else(|| window_not_accessible(&win.id))
 }
 
