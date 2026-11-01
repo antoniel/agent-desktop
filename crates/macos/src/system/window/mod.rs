@@ -4,6 +4,7 @@ pub(crate) mod cg_window_exact;
 pub(crate) mod remote_window;
 pub(crate) mod window_ax_state;
 pub(crate) mod window_bridge;
+pub(crate) mod window_by_id;
 pub(crate) mod window_inventory;
 pub(crate) mod window_inventory_global;
 pub(crate) mod window_ops;

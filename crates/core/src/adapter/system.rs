@@ -311,6 +311,18 @@ pub trait SystemOps: Send + Sync {
         Err(AdapterError::not_supported("window_op"))
     }
 
+    /// Looks up one window by its id without listing every window on the
+    /// system. `Ok(None)` means the adapter has no direct lookup and the caller
+    /// falls back to `list_windows`. A found window carries its owning process
+    /// identity, read from the window server at this call.
+    fn window_by_id(
+        &self,
+        _id: &str,
+        _deadline: Deadline,
+    ) -> Result<Option<WindowInfo>, AdapterError> {
+        Ok(None)
+    }
+
     /// Resolves a live window by `WindowInfo.id`, corroborating the match against
     /// `pid` and, when present, `title`. Opaque ids must not be parsed as numeric
     /// outside the adapter; macOS uses `w-<kCGWindowNumber>`.

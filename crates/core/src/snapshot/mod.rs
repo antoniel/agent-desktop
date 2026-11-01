@@ -217,6 +217,21 @@ pub(crate) fn resolve_window(
     window_id: Option<&str>,
     deadline: crate::Deadline,
 ) -> Result<WindowInfo, AppError> {
+    if let Some(wid) = window_id
+        && let Some(window) = adapter.window_by_id(wid, deadline)?
+    {
+        if app_name.is_some_and(|app| app != window.app) {
+            return Err(AppError::Adapter(
+                crate::AdapterError::new(
+                    crate::ErrorCode::WindowNotFound,
+                    format!("No window with id {wid} in the named application"),
+                )
+                .with_suggestion("Run 'list-windows' to see available window IDs.")
+                .unsent(),
+            ));
+        }
+        return Ok(window);
+    }
     let filter = WindowFilter {
         focused_only: app_name.is_none() && window_id.is_none(),
         app: app_name.map(str::to_string),
@@ -306,13 +321,12 @@ pub fn run_with_context(
     context: &CommandContext,
     timeout_ms: u64,
 ) -> Result<SnapshotResult, AppError> {
-    let mut result = build(
-        adapter,
-        opts,
-        target.app_name,
-        target.window_id,
-        crate::Deadline::after(timeout_ms)?,
-    )?;
+    let deadline = crate::Deadline::after(timeout_ms)?;
+    let read = || build(adapter, opts, target.app_name, target.window_id, deadline);
+    let mut result = match read() {
+        Err(error) if target.window_id.is_some() && window_title_changed(&error) => read()?,
+        other => other?,
+    };
     let store = RefStore::for_session(context.session_id())?;
     let snapshot_id = store.save_new_snapshot(&result.refmap)?;
     trace_artifacts::copy_refmap_if_full(context, &store, &snapshot_id, &result.refmap)?;
@@ -320,6 +334,24 @@ pub fn run_with_context(
     emit_snapshot_saved(context, &result)?;
     Ok(result)
 }
+
+/// The named window is the same window (same number and process instance) but
+/// its title changed between the lookup and the read. A snapshot is a read, so
+/// it reads once more with the current title instead of failing.
+fn window_title_changed(error: &AppError) -> bool {
+    matches!(error, AppError::Adapter(error)
+        if error.code == crate::ErrorCode::WindowNotFound
+            && error
+                .details
+                .as_ref()
+                .and_then(|details| details.get("field"))
+                .and_then(serde_json::Value::as_str)
+                == Some("title"))
+}
+
+#[cfg(test)]
+#[path = "snapshot_title_retry_tests.rs"]
+mod title_retry_tests;
 
 pub(crate) fn emit_snapshot_saved(
     context: &CommandContext,

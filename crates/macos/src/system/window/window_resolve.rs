@@ -151,23 +151,23 @@ pub(crate) fn parse_window_number(id: &str) -> Option<i64> {
 fn verify_window_record(win: &WindowInfo, record: &WindowRecord) -> Result<(), AdapterError> {
     let pid = crate::system::process::process_identity::to_pid_t(win.pid)?;
     if record.pid != pid {
-        return Err(window_identity_mismatch(&win.id));
+        return Err(super::window_by_id::mismatched(&win.id, "pid"));
     }
     let Some(instance) = win.process_instance.as_deref() else {
-        return Err(window_identity_mismatch(&win.id));
+        return Err(super::window_by_id::mismatched(&win.id, "process_instance"));
     };
     if record.process_instance.as_deref() != Some(instance)
         || !crate::system::process::process_identity::matches_instance(pid, instance)?
     {
-        return Err(window_identity_mismatch(&win.id));
+        return Err(super::window_by_id::mismatched(&win.id, "process_instance"));
     }
     if !win.app.is_empty() && record.app_name != win.app {
-        return Err(window_identity_mismatch(&win.id));
+        return Err(super::window_by_id::mismatched(&win.id, "app"));
     }
     if !win.title.is_empty() {
         let record_title = record.title.as_deref().unwrap_or(record.app_name.as_str());
         if record_title != win.title {
-            return Err(window_identity_mismatch(&win.id));
+            return Err(super::window_by_id::mismatched(&win.id, "title"));
         }
     }
     Ok(())
@@ -352,7 +352,7 @@ pub(crate) fn ax_window_id_with_deadline(
     Ok(None)
 }
 
-fn invalid_window_id(id: &str) -> AdapterError {
+pub(super) fn invalid_window_id(id: &str) -> AdapterError {
     AdapterError::new(ErrorCode::InvalidArgs, format!("Invalid window id: '{id}'"))
         .with_suggestion("Window ids come from 'list-windows' (format w-<number>).")
 }
@@ -377,7 +377,7 @@ fn window_not_accessible(id: &str) -> AdapterError {
     )
 }
 
-fn window_not_found(id: &str) -> AdapterError {
+pub(super) fn window_not_found(id: &str) -> AdapterError {
     AdapterError::new(
         ErrorCode::WindowNotFound,
         format!("Window '{id}' not found"),
@@ -385,7 +385,7 @@ fn window_not_found(id: &str) -> AdapterError {
     .with_suggestion("Run 'list-windows' to see available windows and their IDs.")
 }
 
-fn window_identity_mismatch(id: &str) -> AdapterError {
+pub(super) fn window_identity_mismatch(id: &str) -> AdapterError {
     AdapterError::new(
         ErrorCode::WindowNotFound,
         format!("Window '{id}' identity mismatch"),

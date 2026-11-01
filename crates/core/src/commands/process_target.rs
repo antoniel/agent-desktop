@@ -28,13 +28,21 @@ pub(crate) fn requested<'a>(
     Ok(Some(window_id))
 }
 
-/// Resolves the named window, then re-checks its owning app under the
-/// interaction lease so a process that exited in between gets no input.
+/// Resolves the named window. With a direct lookup the window and its process
+/// instance come from the window server at this call, and the adapter checks
+/// them again before every event, so no application inventory is needed.
+/// Otherwise the window comes from the full inventory and its owning app is
+/// re-checked under the interaction lease, so a process that exited in
+/// between gets no input.
 pub(crate) fn resolve_window(
     window_id: &str,
     adapter: &dyn PlatformAdapter,
     deadline: crate::Deadline,
 ) -> Result<(WindowInfo, InteractionLease), AppError> {
+    if let Some(window) = adapter.window_by_id(window_id, deadline)? {
+        let lease = adapter.acquire_interaction_lease(deadline)?;
+        return Ok((window, lease));
+    }
     let window = crate::snapshot::resolve_window(adapter, None, Some(window_id), deadline)?;
     let app = crate::system::app_lookup::resolve_app_owning(&window, adapter, deadline)?;
     let lease = adapter.acquire_interaction_lease(deadline)?;
@@ -85,3 +93,7 @@ const MAX_TEXT_LEN: usize = 10_000;
 #[cfg(test)]
 #[path = "process_target_type_tests.rs"]
 mod type_tests;
+
+#[cfg(test)]
+#[path = "process_target_exact_tests.rs"]
+mod exact_tests;

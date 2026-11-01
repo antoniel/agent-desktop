@@ -203,6 +203,18 @@ impl SystemOps for MacOSAdapter {
         crate::system::wait::wait_for_menu(process, open, deadline)
     }
 
+    fn window_by_id(
+        &self,
+        id: &str,
+        deadline: Deadline,
+    ) -> Result<Option<WindowInfo>, AdapterError> {
+        crate::system::window::window_by_id::window_by_id(
+            id,
+            crate::tree::locator_deadline::from_operation(deadline)?,
+        )
+        .map(Some)
+    }
+
     fn resolve_window_strict(
         &self,
         win: &WindowInfo,
